@@ -1,8 +1,8 @@
-# DeepAL4NLP: Deep Active Learning for Natural Language Processing in Python 
+# EASE: Enhanced Active learning based on Sample diversity and data augmEntation
 
 This code is based on DeepAL [1].
 
-In DeepAL4NLP, we implement Active Learning with Data Augmentation for textual classfication. 
+In EASE, we implement Active Learning with Data Augmentation and Sample Diversity for textual classfication. 
 
 It includes Python implementations of the following active learning algorithms:
 
@@ -12,18 +12,16 @@ It includes Python implementations of the following active learning algorithms:
 We use the pre-trained BERT [4] as basic classifier and fine-tune it. One can replace it to other basic classifiers and add them to nets.py. 
 
 
-
 ## Prerequisites 
 
-- Python                3.8.16
-- numpy                 1.21.2
-- pandas                1.5.3
-- scipy                 1.7.1
-- torch                 1.11.0
-- scikit-learn          1.0.1
+- Python                3.10.12
+- numpy                 1.26.4
+- pandas                2.1.4
+- torch                 2.3.1
+- sklearn               1.3.2
 - nlpaug                1.1.11
-- transformers          4.27.4
-- sentence_transformers 2.2.2
+- transformers          4.42.4
+- sentence_transformers 3.0.1
 
 ## Demo 
 
@@ -31,12 +29,12 @@ We use the pre-trained BERT [4] as basic classifier and fine-tune it. One can re
   python demo.py \
       --n_query 20 \
       --n_init_labeled 20 \
-      --dataset_name SemEval_Laptops \
+      --patient 5 \
+      --dataset_name SemEval_Restaurants \
       --strategy_name LeastConfidence \
       --active_learning True \
+      --enhanced_active_learning True \
       --with_augmentation True \
-      --enhanced_augmentation True \
-      --seed 1
 ```
 
 
