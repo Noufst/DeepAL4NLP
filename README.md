@@ -2,7 +2,7 @@
 
 This code is based on DeepAL [1].
 
-In EASE, we implement Active Learning with Data Augmentation and Sample Diversity for textual classfication. 
+In EASE, we implement Active Learning with Data Augmentation and Sample Diversity for textual classfication.
 
 It includes Python implementations of the following active learning algorithms:
 
@@ -10,6 +10,7 @@ It includes Python implementations of the following active learning algorithms:
 - Margin Sampling [3]
 
 We use the pre-trained BERT [4] as basic classifier and fine-tune it. One can replace it to other basic classifiers and add them to nets.py. 
+
 
 
 ## Prerequisites 
@@ -23,6 +24,7 @@ We use the pre-trained BERT [4] as basic classifier and fine-tune it. One can re
 - transformers          4.42.4
 - sentence_transformers 3.0.1
 
+
 ## Demo 
 
 ```
@@ -35,6 +37,7 @@ We use the pre-trained BERT [4] as basic classifier and fine-tune it. One can re
       --active_learning True \
       --enhanced_active_learning True \
       --with_augmentation True \
+
 ```
 
 

@@ -1,21 +1,22 @@
 import numpy as np
 import torch
-from torchvision import datasets
+#from torchvision import datasets
 import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import precision_score, recall_score, f1_score
+#from sklearn.model_selection import train_test_split
+from sklearn.metrics import precision_score, recall_score, f1_score, confusion_matrix
 from sklearn import preprocessing
-from collections import Counter
+#from collections import Counter
 import nltk
 import numpy as np
 nltk.download('punkt')
-from datasets.parse_xml import parse_SemEval
+#from datasets.parse_xml import parse_SemEval
 from transformers import BertTokenizer
-import random 
+#import random 
+import pickle
 
 class Data_BERT:
         
-    def __init__(self, handler, X_train, Y_train, X_test, Y_test):
+    def __init__(self, handler, X_train, Y_train, X_test, Y_test, similarity_scores):
 
         # initialize variables
         self.X_train = X_train
@@ -25,6 +26,7 @@ class Data_BERT:
         self.handler = handler
         self.n_pool = len(X_train)
         self.n_test = len(X_test)
+        self.similarity_scores = similarity_scores
         
         self.labeled_idxs = np.zeros(self.n_pool, dtype=bool)
 
@@ -49,6 +51,8 @@ class Data_BERT:
 
         self.input_ids_train, self.attention_masks_train, self.labels_train = self.tokenize(X_train, Y_train)
         self.input_ids_test, self.attention_masks_test, self.labels_test = self.tokenize(X_test, Y_test)
+
+ 
 
     def tokenize(self, X, Y):
 
@@ -127,13 +131,35 @@ class Data_BERT:
     
     def cal_test_f1(self, preds):
         return f1_score(self.Y_test, preds)
+    
+    def cal_test_cm(self, preds):
+        return confusion_matrix(self.Y_test, preds)
 
+
+    def get_similarity_scores(self, candidate_datapoints):
+
+        candidate_datapoints = candidate_datapoints.tolist()
+
+        candidate_datapoints_series = pd.Series(candidate_datapoints)
+
+        queried_similarity_scores_1 = self.similarity_scores[self.similarity_scores['sentence_1_embeddings'].isin(candidate_datapoints_series)]
+        queried_similarity_scores_2 = self.similarity_scores[self.similarity_scores['sentence_2_embeddings'].isin(candidate_datapoints_series)]
+        
+
+        queried_similarity_scores = pd.concat([queried_similarity_scores_1, queried_similarity_scores_2])
+        
+        return queried_similarity_scores
 
 def get_SemEval_Restaurants(handler):
 
     train_data = pd.read_csv("datasets/SemEval/Restaurants_Train.csv")
     test_data = pd.read_csv("datasets/SemEval/Restaurants_Test.csv")
 
+    similarity_scores_file = open('datasets/SemEval/Restaurants_Similarity', 'rb')   
+    similarity_scores = pickle.load(similarity_scores_file)
+    similarity_scores = pd.DataFrame(similarity_scores, columns = ["sentence_1", "sentence_1_embeddings", "sentence_2", "sentence_2_embeddings", "similarity_score"])
+    similarity_scores_file.close()
+
     train_data = train_data.dropna()
     test_data = test_data.dropna()
     train_data = train_data[train_data['sentiment'] != 'neutral']
@@ -157,13 +183,18 @@ def get_SemEval_Restaurants(handler):
     y_train = le.fit_transform(y_train)
     y_test = le.transform(y_test)
 
-    return Data_BERT(handler, X_train, y_train, X_test, y_test)
+    return Data_BERT(handler, X_train, y_train, X_test, y_test, similarity_scores)
 
 def get_SemEval_Laptops(handler):
 
     train_data = pd.read_csv("datasets/SemEval/Laptops_Train.csv")
     test_data = pd.read_csv("datasets/SemEval/Laptops_Test.csv")
 
+    similarity_scores_file = open('datasets/SemEval/Laptops_Similarity', 'rb')   
+    similarity_scores = pickle.load(similarity_scores_file)
+    similarity_scores = pd.DataFrame(similarity_scores, columns = ["sentence_1", "sentence_1_embeddings", "sentence_2", "sentence_2_embeddings", "similarity_score"])
+    similarity_scores_file.close()
+
     train_data = train_data.dropna()
     test_data = test_data.dropna()
     train_data = train_data[train_data['sentiment'] != 'neutral']
@@ -187,4 +218,40 @@ def get_SemEval_Laptops(handler):
     y_train = le.fit_transform(y_train)
     y_test = le.transform(y_test)
 
-    return Data_BERT(handler, X_train, y_train, X_test, y_test)
+    return Data_BERT(handler, X_train, y_train, X_test, y_test, similarity_scores)
+
+
+def get_AWARE(handler):
+
+    train_data = pd.read_csv("datasets/AWARE/train.csv")
+    test_data = pd.read_csv("datasets/AWARE/test.csv")
+
+    similarity_scores_file = open('datasets/AWARE/similarity', 'rb')   
+    similarity_scores = pickle.load(similarity_scores_file)
+    similarity_scores = pd.DataFrame(similarity_scores, columns = ["sentence_1", "sentence_1_embeddings", "sentence_2", "sentence_2_embeddings", "similarity_score"])
+
+    similarity_scores_file.close()
+
+    train_data = train_data.dropna()
+    test_data = test_data.dropna()
+
+    train_data["sentence"] = train_data["sentence"] +" "+ train_data["category"]
+    test_data["sentence"] = test_data["sentence"] +" "+ test_data["category"] 
+
+    train_data['sentiment'] = train_data['sentiment'].str.lower()
+    test_data['sentiment'] = test_data['sentiment'].str.lower()
+    train_data['sentence'] = train_data['sentence'].str.lower()
+    test_data['sentence'] = test_data['sentence'].str.lower()
+
+    X_train = train_data['sentence'].values
+    X_test = test_data['sentence'].values
+
+    y_train = train_data['sentiment'].values
+    y_test = test_data['sentiment'].values
+
+    le = preprocessing.LabelEncoder()
+    y_train = le.fit_transform(y_train)
+    y_test = le.transform(y_test)
+
+
+    return Data_BERT(handler, X_train, y_train, X_test, y_test, similarity_scores)

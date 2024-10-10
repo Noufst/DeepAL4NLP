@@ -17,6 +17,9 @@ class Strategy:
 
     def query(self, n):
         pass
+
+    def enhanced_query(self, n):
+        pass
     
     def update(self, pos_idxs, neg_idxs=None):
         self.dataset.labeled_idxs[pos_idxs] = True
@@ -109,7 +112,7 @@ class Strategy:
         # hyperparameters tuning
         for BATCH_SIZE in BATCH_SIZES:
             for LEARNING_RATE in LEARNING_RATES:
-                training_stats = self.net.train_bert(input_ids, attention_masks, labels, LEARNING_RATE, BATCH_SIZE)
+                training_stats = self.net.train_bert(input_ids, attention_masks, labels, LEARNING_RATE, BATCH_SIZE, 4) #1
                 all_training_stats.append(training_stats)
         all_training_stats = [item for sublist in all_training_stats for item in sublist]
 
@@ -122,7 +125,9 @@ class Strategy:
         print("best hyperparameters:")
         print(best_hp['epoch'], best_hp['learning_rate'], best_hp['batch_size'])
         print()
-        training_stats = self.net.train_bert(input_ids, attention_masks, labels, round, best_hp['epoch'], best_hp['learning_rate'], best_hp['batch_size'])
+
+        training_stats = self.net.train_bert(input_ids, attention_masks, labels, best_hp['learning_rate'], best_hp['batch_size'], best_hp['epoch'])
+
         return [best_hp['epoch'], best_hp['learning_rate'], best_hp['batch_size']], len(labels)
 
     def predict_bert(self, input_ids, attention_masks, labels):

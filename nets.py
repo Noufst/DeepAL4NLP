@@ -8,9 +8,8 @@ from torch.utils.data import RandomSampler, TensorDataset, SequentialSampler, ra
 import random
 
 class Net:
-    def __init__(self, net, params, device):
-        self.net = net
-        self.params = params
+    def __init__(self, device):
+     
         self.device = device
 
         self.g = torch.Generator()
@@ -40,7 +39,7 @@ class Net:
         np.random.seed(worker_seed)
         random.seed(worker_seed)
 
-    def get_train_val_dataloaders(self, input_ids, attention_masks, labels):
+    def get_train_val_dataloaders(self, input_ids, attention_masks, labels, batch_size):
 
         # Combine the training inputs into a TensorDataset.
         dataset = TensorDataset(input_ids, attention_masks, labels)
@@ -62,7 +61,7 @@ class Net:
         train_dataloader = DataLoader(
                     train_dataset,  # The training samples.
                     sampler = RandomSampler(train_dataset), # Select batches randomly
-                    batch_size = 16, # Trains with this batch size.
+                    batch_size = batch_size, # Trains with this batch size.
                     num_workers = 0,
                     worker_init_fn = self.seed_worker,
                     generator = self.g
@@ -74,7 +73,7 @@ class Net:
         validation_dataloader = DataLoader(
                     val_dataset, # The validation samples.
                     sampler = SequentialSampler(val_dataset), # Pull out batches sequentially.
-                    batch_size = 16, # Evaluate with this batch size.
+                    batch_size = 32, # Evaluate with this batch size.
                     num_workers = 0,
                     worker_init_fn = self.seed_worker,
                     generator = self.g
@@ -82,9 +81,9 @@ class Net:
 
         return train_dataloader, validation_dataloader
 
-    def train_bert(self, input_ids, attention_masks, labels, LEARNING_RATE, BATCH_SIZE):
+    def train_bert(self, input_ids, attention_masks, labels, LEARNING_RATE, BATCH_SIZE, EPOCHS):
 
-        train_dataloader, validation_dataloader = self.get_train_val_dataloaders(input_ids, attention_masks, labels)
+        train_dataloader, validation_dataloader = self.get_train_val_dataloaders(input_ids, attention_masks, labels, BATCH_SIZE)
 
         # ========================================
         #   Load BertForSequenceClassification
@@ -102,7 +101,7 @@ class Net:
         )
 
         # Set number of epochs
-        epochs = 4
+        epochs = EPOCHS
         learning_rate = LEARNING_RATE
         batch_size = BATCH_SIZE
 
